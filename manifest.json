@@ -3,9 +3,6 @@
   "name": "Hyruleguessr Filters",
   "description": "Advanced filters for Hyruleguessr",
   "version": "1.0",
-  "permissions": [
-    "storage"
-  ],
   "content_scripts": [
     {
       "js": ["new-game.js"],

@@ -1,17 +1,52 @@
 const configs = [
   {
-    id: "blur",
+    id: "filter-blur",
     label: "Blur",
   },
   {
-    id: "invert",
+    id: "filter-invert",
     label: "Invert colors",
   },
   {
-    id: "greyscale",
+    id: "filter-greyscale",
     label: "Greyscale",
-  }
+  },
+  {
+    id: "filter-upsidedown",
+    label: "Upside Down",
+  },
 ]
+
+const styleElement = document.createElement('style');
+document.body.append(styleElement);
+
+const handleConfigChange = () => {
+  const blur = document.getElementById('filter-blur').checked;
+  const invert = document.getElementById('filter-invert').checked;
+  const greyscale = document.getElementById('filter-greyscale').checked;
+  const upsidedown = document.getElementById('filter-upsidedown').checked;
+
+  const filters = [];
+  const transform = [];
+
+  if (blur) {
+    filters.push('blur(8px)');
+  }
+  if (invert) {
+    filters.push('invert(100%)');
+  }
+  if (greyscale) {
+    filters.push('grayscale(100%)');
+  }
+  if (upsidedown) {
+    transform.push('rotate(180deg)');
+  }
+
+  if (styleElement.sheet.cssRules.length > 0) {
+    styleElement.sheet.deleteRule(0);
+  }
+  styleElement.sheet.insertRule('.viewer-canvas img { filter: ' + filters.join(' ') + '; transform: ' + transform.join(' ') + ' !important; }');
+}
 
 const ctaElement = document.querySelector('.start-game-btn-container');
 const configContainer = document.createElement('div');
@@ -25,15 +60,7 @@ configs.forEach(config => {
   checkbox.id = config.id;
   checkbox.type = 'checkbox';
   checkbox.classList.add('form-check-input');
-  checkbox.onchange = (event) => {
-    chrome.storage.sync.set({ [config.id]: event.target.checked });
-  }
-
-  chrome.storage.sync.get(config.id).then((value) => {
-    if (!!value[config.id]) {
-      checkbox.checked = value;
-    }
-  });
+  checkbox.onchange = handleConfigChange;
   
   const label = document.createElement('label');
   label.htmlFor = config.id;
@@ -45,4 +72,3 @@ configs.forEach(config => {
 });
 
 ctaElement.before(configContainer);
-
