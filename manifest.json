@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Hyruleguessr Filters",
+  "description": "Advanced filters for Hyruleguessr",
+  "version": "1.0",
+  "permissions": [
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "js": ["new-game.js"],
+      "matches": [
+        "https://hyruleguessr.com/game"
+      ]
+    }
+  ]
+
+}
