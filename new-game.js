@@ -199,8 +199,8 @@ half_visible_filter.setAttribute('height', '100%');
 svg.appendChild(half_visible_filter);
 
 const half_visible_feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
-half_visible_feImage.setAttribute('width', '213');
-half_visible_feImage.setAttribute('height', '240');
+half_visible_feImage.setAttribute('width', '320');
+half_visible_feImage.setAttribute('height', '360');
 half_visible_feImage.setAttribute('href', maskUrl);
 half_visible_feImage.setAttribute('result', 'mask-tile');
 half_visible_filter.appendChild(half_visible_feImage);
