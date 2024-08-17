@@ -1,5 +1,9 @@
 const configs = [
   {
+    id: "filter-scramble",
+    label: "Scramble",
+  },
+  {
     id: "filter-pixelate",
     label: "Pixelate",
   },
@@ -25,47 +29,63 @@ const configs = [
   },
 ]
 
-const onLoadNewGamePage = () => {
-  // Create a style element to apply the filters
-  const styleElement = document.createElement('style');
-  document.body.append(styleElement);
+// Create a style element to apply the filters
+const styleElement = document.createElement('style');
+document.body.append(styleElement);
 
-  const handleConfigChange = () => {
-    const blur = document.getElementById('filter-blur').checked;
-    const invert = document.getElementById('filter-invert').checked;
-    const greyscale = document.getElementById('filter-greyscale').checked;
-    const upsideDown = document.getElementById('filter-upside-down').checked;
-    const pixelate = document.getElementById('filter-pixelate').checked;
-    const halfVisible = document.getElementById('filter-half-visible').checked;
+const handleConfigChange = () => {
+  const scramble = document.getElementById('filter-scramble').checked;
+  const pixelate = document.getElementById('filter-pixelate').checked;
+  const halfVisible = document.getElementById('filter-half-visible').checked;
+  const blur = document.getElementById('filter-blur').checked;
+  const invert = document.getElementById('filter-invert').checked;
+  const greyscale = document.getElementById('filter-greyscale').checked;
+  const upsideDown = document.getElementById('filter-upside-down').checked;
 
-    const filters = [];
-    const transform = [];
+  const filters = [];
+  const transform = [];
 
-    if (blur) {
-      filters.push('blur(5px)');
-    }
-    if (invert) {
-      filters.push('invert(100%)');
-    }
-    if (greyscale) {
-      filters.push('grayscale(100%)');
-    }
-    if (upsideDown) {
-      transform.push('rotate(180deg)');
-    }
-    if (pixelate) {
-      filters.push('url(#pixelate)');
-    }
-    if (halfVisible) {
-      filters.push('url(#half-visible)');
-    }
-
-    if (styleElement.sheet.cssRules.length > 0) {
-      styleElement.sheet.deleteRule(0);
-    }
-    styleElement.sheet.insertRule('.viewer-canvas img { filter: ' + filters.join(' ') + '; transform: ' + transform.join(' ') + ' !important; }');
+  if (scramble) {
+    filters.push('url(#scramble)');
+  }
+  if (pixelate) {
+    filters.push('url(#pixelate)');
+  }
+  if (halfVisible) {
+    filters.push('url(#half-visible)');
+  }
+  if (blur) {
+    filters.push('blur(5px)');
+  }
+  if (invert) {
+    filters.push('invert(100%)');
+  }
+  if (greyscale) {
+    filters.push('grayscale(100%)');
+  }
+  if (upsideDown) {
+    transform.push('rotate(180deg)');
   }
 
+  if (styleElement.sheet.cssRules.length > 0) {
+    styleElement.sheet.deleteRule(0);
+  }
+  styleElement.sheet.insertRule(`
+    .viewer-canvas img {
+      filter: ${filters.join(' ')};
+      transform: ${transform.join(' ')} !important;
+      width: 100% ${scramble ? '!important' : ''};
+      height: 100% ${scramble ? '!important' : ''};
+    }
+  `);
+}
+
+const onLoadNewGamePage = () => {
+  // Clear current styles
+  if (styleElement.sheet.cssRules.length > 0) {
+    styleElement.sheet.deleteRule(0);
+  }
+  
   // Create container for filter controls
   const ctaElement = document.querySelector('.start-game-btn-container');
   const configContainer = document.createElement('div');
@@ -124,10 +144,19 @@ observer = new MutationObserver(() => {
 const container = document.querySelector('.router-container');
 observer.observe(container, {childList: true, subtree: true});
 
+// Helper function
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
 // Append svg for filters
 const maskUrl = chrome.runtime.getURL('mask.png');
 const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
 
+// Pixelate
 const pixelate_filter = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
 pixelate_filter.setAttribute('id', 'pixelate');
 pixelate_filter.setAttribute('x', '0%');
@@ -162,6 +191,7 @@ pixelate_feDisplacementMap.setAttribute('yChannelSelector', 'G');
 pixelate_feDisplacementMap.setAttribute('scale', '50');
 pixelate_filter.appendChild(pixelate_feDisplacementMap);
 
+// Half Visible
 const half_visible_filter = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
 half_visible_filter.setAttribute('id', 'half-visible');
 half_visible_filter.setAttribute('x', '0%');
@@ -187,6 +217,72 @@ half_visible_feBlend.setAttribute('in', 'SourceGraphic');
 half_visible_feBlend.setAttribute('in2', 'mask');
 half_visible_feBlend.setAttribute('mode', 'multiply');
 half_visible_filter.appendChild(half_visible_feBlend);
+
+// Scramble
+const width = 1280;
+const height = 720;
+const xsteps = 8;
+const ysteps = 4;
+
+const stepX = width / xsteps;
+const stepY = height / ysteps;
+
+const targets = [];
+for (let i = 0; i < xsteps; i++){
+  for (let j = 0; j < ysteps; j++){
+    targets.push([i, j]);
+  }
+}
+shuffleArray(targets);
+
+const scramble_filter = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
+scramble_filter.setAttribute('id', 'scramble');
+scramble_filter.setAttribute('x', '0%');
+scramble_filter.setAttribute('y', '0%');
+scramble_filter.setAttribute('width', '100%');
+scramble_filter.setAttribute('height', '100%');
+svg.appendChild(scramble_filter);
+
+const scramble_feMerge = document.createElementNS("http://www.w3.org/2000/svg", 'feMerge');
+
+for (let i = 0; i < xsteps; i++){
+  for (let j = 0; j < ysteps; j++){
+    const x = i * stepX;
+    const y = j * stepY;
+
+    const [targetI, targetJ] = targets[i * ysteps + j];
+
+    const scramble_feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
+    scramble_feImage.setAttribute('x', x);
+    scramble_feImage.setAttribute('y', y);
+    scramble_feImage.setAttribute('width', stepX);
+    scramble_feImage.setAttribute('height', stepY);
+    scramble_feImage.setAttribute('preserveAspectRatio', 'none');
+    scramble_feImage.setAttribute('href', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII=');
+    scramble_feImage.setAttribute('result', `mask-${i}-${j}`);
+    scramble_filter.appendChild(scramble_feImage);
+
+    const scramble_feComposite = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+    scramble_feComposite.setAttribute('in', 'SourceGraphic');
+    scramble_feComposite.setAttribute('in2', `mask-${i}-${j}`);
+    scramble_feComposite.setAttribute('operator', 'in');
+    scramble_feComposite.setAttribute('result', `tile-${i}-${j}`);
+    scramble_filter.appendChild(scramble_feComposite);
+    
+    const scramble_feOffset = document.createElementNS("http://www.w3.org/2000/svg", 'feOffset');
+    scramble_feOffset.setAttribute('in', `tile-${i}-${j}`);
+    scramble_feOffset.setAttribute('dx', (targetI - i) * stepX);
+    scramble_feOffset.setAttribute('dy', (targetJ - j) * stepY);
+    scramble_feOffset.setAttribute('result', `offset-${i}-${j}`);
+    scramble_filter.appendChild(scramble_feOffset);
+
+    const scramble_feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+    scramble_feMergeNode.setAttribute('in', `offset-${i}-${j}`);
+    scramble_feMerge.appendChild(scramble_feMergeNode);
+  }
+}
+
+scramble_filter.appendChild(scramble_feMerge);
 
 svg.style.display = 'none';
 document.body.appendChild(svg);
