@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "HyruleGuessr Filters",
   "description": "Advanced filters for HyruleGuessr",
-  "version": "1.1",
+  "version": "1.2",
   "content_scripts": [
     {
       "js": ["new-game.js"],
