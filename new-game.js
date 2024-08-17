@@ -1,16 +1,4 @@
-const configs = [
-  {
-    id: "filter-scramble",
-    label: "Scramble",
-  },
-  {
-    id: "filter-pixelate",
-    label: "Pixelate",
-  },
-  {
-    id: "filter-half-visible",
-    label: "Half Visible",
-  },
+const easyFilters = [
   {
     id: "filter-upside-down",
     label: "Upside Down",
@@ -29,11 +17,26 @@ const configs = [
   },
 ]
 
+const hardFilters = [
+  {
+    id: "filter-scramble",
+    label: "Scramble",
+  },
+  {
+    id: "filter-pixelate",
+    label: "Pixelate",
+  },
+  {
+    id: "filter-half-visible",
+    label: "Half Visible",
+  },
+];
+
 // Create a style element to apply the filters
 const styleElement = document.createElement('style');
 document.body.append(styleElement);
 
-const handleConfigChange = () => {
+const handleFiltersChange = () => {
   const scramble = document.getElementById('filter-scramble').checked;
   const pixelate = document.getElementById('filter-pixelate').checked;
   const halfVisible = document.getElementById('filter-half-visible').checked;
@@ -80,6 +83,25 @@ const handleConfigChange = () => {
   `);
 }
 
+const createFilter = (filter) => {
+  const div = document.createElement('div');
+  div.classList.add('form-check', 'form-check-inline');
+  
+  const checkbox = document.createElement('input');
+  checkbox.id = filter.id;
+  checkbox.type = 'checkbox';
+  checkbox.classList.add('form-check-input');
+  checkbox.onchange = handleFiltersChange;
+  
+  const label = document.createElement('label');
+  label.htmlFor = filter.id;
+  label.classList.add('form-check-label');
+  label.textContent = filter.label;
+
+  div.append(checkbox, label);
+  return div;
+}
+
 const onLoadNewGamePage = () => {
   // Clear current styles
   if (styleElement.sheet.cssRules.length > 0) {
@@ -88,38 +110,31 @@ const onLoadNewGamePage = () => {
   
   // Create container for filter controls
   const ctaElement = document.querySelector('.start-game-btn-container');
-  const configContainer = document.createElement('div');
-  const title = document.createElement('h4');
+  const filtersContainer = document.createElement('div');
+  ctaElement.before(filtersContainer);
+  
+  // Append easy filters
+  const titleEasy = document.createElement('h4');
+  titleEasy.textContent = 'Easy Filters';
+  titleEasy.style.marginTop = '1.2em';
+  filtersContainer.append(titleEasy);
 
-  title.textContent = 'Advanced Filters';
-  configContainer.append(title);
-  configContainer.style.marginTop = '1.2em';
-
-  // Append each filter to container
-  configs.forEach((config, i) => { 
-    if (i == 3) {
-      configContainer.append(document.createElement('br'));
-    }
-
-    const div = document.createElement('div');
-    div.classList.add('form-check', 'form-check-inline');
-    
-    const checkbox = document.createElement('input');
-    checkbox.id = config.id;
-    checkbox.type = 'checkbox';
-    checkbox.classList.add('form-check-input');
-    checkbox.onchange = handleConfigChange;
-    
-    const label = document.createElement('label');
-    label.htmlFor = config.id;
-    label.classList.add('form-check-label');
-    label.textContent = config.label;
-
-    div.append(checkbox, label);
-    configContainer.append(div);
+  easyFilters.forEach((filter) => { 
+    const filterDiv = createFilter(filter);
+    filtersContainer.append(filterDiv);
   });
 
-  ctaElement.before(configContainer);
+  // Append hard filters
+  const titleHard = document.createElement('h4');
+  titleHard.textContent = 'Hard Filters';
+  titleHard.style.marginTop = '1.2em';
+  filtersContainer.append(titleHard);
+
+  hardFilters.forEach((filter) => { 
+    const filterDiv = createFilter(filter);
+    filtersContainer.append(filterDiv);
+  });
+
 }
 
 // Inject content on "New Game" page
