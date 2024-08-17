@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Hyruleguessr Filters",
-  "description": "Advanced filters for Hyruleguessr",
+  "name": "HyruleGuessr Filters",
+  "description": "Advanced filters for HyruleGuessr",
   "version": "1.0",
   "content_scripts": [
     {
