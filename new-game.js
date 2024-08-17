@@ -25,81 +25,104 @@ const configs = [
   },
 ]
 
+const onLoadNewGamePage = () => {
+  // Create a style element to apply the filters
+  const styleElement = document.createElement('style');
+  document.body.append(styleElement);
 
-// Create a style element to apply the filters
-const styleElement = document.createElement('style');
-document.body.append(styleElement);
+  const handleConfigChange = () => {
+    const blur = document.getElementById('filter-blur').checked;
+    const invert = document.getElementById('filter-invert').checked;
+    const greyscale = document.getElementById('filter-greyscale').checked;
+    const upsideDown = document.getElementById('filter-upside-down').checked;
+    const pixelate = document.getElementById('filter-pixelate').checked;
+    const halfVisible = document.getElementById('filter-half-visible').checked;
 
-const handleConfigChange = () => {
-  const blur = document.getElementById('filter-blur').checked;
-  const invert = document.getElementById('filter-invert').checked;
-  const greyscale = document.getElementById('filter-greyscale').checked;
-  const upsideDown = document.getElementById('filter-upside-down').checked;
-  const pixelate = document.getElementById('filter-pixelate').checked;
-  const halfVisible = document.getElementById('filter-half-visible').checked;
+    const filters = [];
+    const transform = [];
 
-  const filters = [];
-  const transform = [];
+    if (blur) {
+      filters.push('blur(5px)');
+    }
+    if (invert) {
+      filters.push('invert(100%)');
+    }
+    if (greyscale) {
+      filters.push('grayscale(100%)');
+    }
+    if (upsideDown) {
+      transform.push('rotate(180deg)');
+    }
+    if (pixelate) {
+      filters.push('url(#pixelate)');
+    }
+    if (halfVisible) {
+      filters.push('url(#half-visible)');
+    }
 
-  if (blur) {
-    filters.push('blur(5px)');
-  }
-  if (invert) {
-    filters.push('invert(100%)');
-  }
-  if (greyscale) {
-    filters.push('grayscale(100%)');
-  }
-  if (upsideDown) {
-    transform.push('rotate(180deg)');
-  }
-  if (pixelate) {
-    filters.push('url(#pixelate)');
-  }
-  if (halfVisible) {
-    filters.push('url(#half-visible)');
+    if (styleElement.sheet.cssRules.length > 0) {
+      styleElement.sheet.deleteRule(0);
+    }
+    styleElement.sheet.insertRule('.viewer-canvas img { filter: ' + filters.join(' ') + '; transform: ' + transform.join(' ') + ' !important; }');
   }
 
-  if (styleElement.sheet.cssRules.length > 0) {
-    styleElement.sheet.deleteRule(0);
-  }
-  styleElement.sheet.insertRule('.viewer-canvas img { filter: ' + filters.join(' ') + '; transform: ' + transform.join(' ') + ' !important; }');
+  // Create container for filter controls
+  const ctaElement = document.querySelector('.start-game-btn-container');
+  const configContainer = document.createElement('div');
+  const title = document.createElement('h4');
+
+  title.textContent = 'Advanced Filters';
+  configContainer.append(title);
+  configContainer.style.marginTop = '1.2em';
+
+  // Append each filter to container
+  configs.forEach((config, i) => { 
+    if (i == 3) {
+      configContainer.append(document.createElement('br'));
+    }
+
+    const div = document.createElement('div');
+    div.classList.add('form-check', 'form-check-inline');
+    
+    const checkbox = document.createElement('input');
+    checkbox.id = config.id;
+    checkbox.type = 'checkbox';
+    checkbox.classList.add('form-check-input');
+    checkbox.onchange = handleConfigChange;
+    
+    const label = document.createElement('label');
+    label.htmlFor = config.id;
+    label.classList.add('form-check-label');
+    label.textContent = config.label;
+
+    div.append(checkbox, label);
+    configContainer.append(div);
+  });
+
+  ctaElement.before(configContainer);
 }
 
-// Create container for filter controls
-const ctaElement = document.querySelector('.start-game-btn-container');
-const configContainer = document.createElement('div');
-const title = document.createElement('h4');
+// Inject content on "New Game" page
+const isNewGamePage = () => {
+  return !!document.querySelector('.start-game-btn-container');
+}
 
-title.textContent = 'Advanced Filters';
-configContainer.append(title);
-configContainer.style.marginTop = '1.2em';
+let inNewGamePage = isNewGamePage();
+if (inNewGamePage) {
+  onLoadNewGamePage();
+}
 
-// Append each filter to container
-configs.forEach((config, i) => { 
-  if (i == 3) {
-    configContainer.append(document.createElement('br'));
+observer = new MutationObserver(() => {
+  const previousInNewGamePage = inNewGamePage;
+  inNewGamePage = isNewGamePage();
+  
+  if (inNewGamePage != previousInNewGamePage && inNewGamePage) {
+    onLoadNewGamePage();
   }
-
-  const div = document.createElement('div');
-  div.classList.add('form-check', 'form-check-inline');
-  
-  const checkbox = document.createElement('input');
-  checkbox.id = config.id;
-  checkbox.type = 'checkbox';
-  checkbox.classList.add('form-check-input');
-  checkbox.onchange = handleConfigChange;
-  
-  const label = document.createElement('label');
-  label.htmlFor = config.id;
-  label.classList.add('form-check-label');
-  label.textContent = config.label;
-
-  div.append(checkbox, label);
-  configContainer.append(div);
 });
 
-ctaElement.before(configContainer);
+const container = document.querySelector('.router-container');
+observer.observe(container, {childList: true, subtree: true});
 
 // Append svg for filters
 const maskUrl = chrome.runtime.getURL('mask.png');
