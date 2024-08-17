@@ -1,5 +1,17 @@
 const configs = [
   {
+    id: "filter-pixelate",
+    label: "Pixelate",
+  },
+  {
+    id: "filter-half-visible",
+    label: "Half Visible",
+  },
+  {
+    id: "filter-upside-down",
+    label: "Upside Down",
+  },
+  {
     id: "filter-blur",
     label: "Blur",
   },
@@ -11,15 +23,8 @@ const configs = [
     id: "filter-greyscale",
     label: "Greyscale",
   },
-  {
-    id: "filter-upside-down",
-    label: "Upside Down",
-  },
-  {
-    id: "filter-pixelate",
-    label: "Pixelate",
-  },
 ]
+
 
 // Create a style element to apply the filters
 const styleElement = document.createElement('style');
@@ -29,8 +34,9 @@ const handleConfigChange = () => {
   const blur = document.getElementById('filter-blur').checked;
   const invert = document.getElementById('filter-invert').checked;
   const greyscale = document.getElementById('filter-greyscale').checked;
-  const upsidedown = document.getElementById('filter-upside-down').checked;
+  const upsideDown = document.getElementById('filter-upside-down').checked;
   const pixelate = document.getElementById('filter-pixelate').checked;
+  const halfVisible = document.getElementById('filter-half-visible').checked;
 
   const filters = [];
   const transform = [];
@@ -44,11 +50,14 @@ const handleConfigChange = () => {
   if (greyscale) {
     filters.push('grayscale(100%)');
   }
-  if (upsidedown) {
+  if (upsideDown) {
     transform.push('rotate(180deg)');
   }
   if (pixelate) {
     filters.push('url(#pixelate)');
+  }
+  if (halfVisible) {
+    filters.push('url(#half-visible)');
   }
 
   if (styleElement.sheet.cssRules.length > 0) {
@@ -88,41 +97,69 @@ configs.forEach(config => {
 
 ctaElement.before(configContainer);
 
-// Append svg for pixelate filter
+// Append svg for filters
+const maskUrl = chrome.runtime.getURL('mask.png');
 const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-const filter = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
-filter.setAttribute('id', 'pixelate');
-filter.setAttribute('x', '0%');
-filter.setAttribute('y', '0%');
-filter.setAttribute('width', '100%');
-filter.setAttribute('height', '100%');
-svg.appendChild(filter);
 
-const feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
-feImage.setAttribute('width', '15');
-feImage.setAttribute('height', '15');
-feImage.setAttribute('href', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAIAAAACDbGyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAWSURBVAgdY1ywgOEDAwKxgJhIgFQ+AP/vCNK2s+8LAAAAAElFTkSuQmCC');
-feImage.setAttribute('result', 'displacement-map');
-filter.appendChild(feImage);
+const pixelate_filter = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
+pixelate_filter.setAttribute('id', 'pixelate');
+pixelate_filter.setAttribute('x', '0%');
+pixelate_filter.setAttribute('y', '0%');
+pixelate_filter.setAttribute('width', '100%');
+pixelate_filter.setAttribute('height', '100%');
+svg.appendChild(pixelate_filter);
 
-const feTile = document.createElementNS("http://www.w3.org/2000/svg", 'feTile');
-feTile.setAttribute('in', 'displacement-map');
-feTile.setAttribute('result', 'pixelate-map');
-filter.appendChild(feTile);
+const pixelate_feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
+pixelate_feImage.setAttribute('width', '15');
+pixelate_feImage.setAttribute('height', '15');
+pixelate_feImage.setAttribute('href', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAIAAAACDbGyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAWSURBVAgdY1ywgOEDAwKxgJhIgFQ+AP/vCNK2s+8LAAAAAElFTkSuQmCC');
+pixelate_feImage.setAttribute('result', 'displacement-map');
+pixelate_filter.appendChild(pixelate_feImage);
 
-const gaussianBlur = document.createElementNS("http://www.w3.org/2000/svg", 'feGaussianBlur');
-gaussianBlur.setAttribute('stdDeviation', '2');
-gaussianBlur.setAttribute('in', 'SourceGraphic');
-gaussianBlur.setAttribute('result', 'smoothed');
-filter.appendChild(gaussianBlur);
+const pixelate_feTile = document.createElementNS("http://www.w3.org/2000/svg", 'feTile');
+pixelate_feTile.setAttribute('in', 'displacement-map');
+pixelate_feTile.setAttribute('result', 'pixelate-map');
+pixelate_filter.appendChild(pixelate_feTile);
 
-const feDisplacementMap = document.createElementNS("http://www.w3.org/2000/svg", 'feDisplacementMap');
-feDisplacementMap.setAttribute('in', 'smoothed');
-feDisplacementMap.setAttribute('in2', 'pixelate-map');
-feDisplacementMap.setAttribute('xChannelSelector', 'R');
-feDisplacementMap.setAttribute('yChannelSelector', 'G');
-feDisplacementMap.setAttribute('scale', '50');
-filter.appendChild(feDisplacementMap);
+const pixelate_gaussianBlur = document.createElementNS("http://www.w3.org/2000/svg", 'feGaussianBlur');
+pixelate_gaussianBlur.setAttribute('stdDeviation', '2');
+pixelate_gaussianBlur.setAttribute('in', 'SourceGraphic');
+pixelate_gaussianBlur.setAttribute('result', 'smoothed');
+pixelate_filter.appendChild(pixelate_gaussianBlur);
+
+const pixelate_feDisplacementMap = document.createElementNS("http://www.w3.org/2000/svg", 'feDisplacementMap');
+pixelate_feDisplacementMap.setAttribute('in', 'smoothed');
+pixelate_feDisplacementMap.setAttribute('in2', 'pixelate-map');
+pixelate_feDisplacementMap.setAttribute('xChannelSelector', 'R');
+pixelate_feDisplacementMap.setAttribute('yChannelSelector', 'G');
+pixelate_feDisplacementMap.setAttribute('scale', '50');
+pixelate_filter.appendChild(pixelate_feDisplacementMap);
+
+const half_visible_filter = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
+half_visible_filter.setAttribute('id', 'half-visible');
+half_visible_filter.setAttribute('x', '0%');
+half_visible_filter.setAttribute('y', '0%');
+half_visible_filter.setAttribute('width', '100%');
+half_visible_filter.setAttribute('height', '100%');
+svg.appendChild(half_visible_filter);
+
+const half_visible_feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
+half_visible_feImage.setAttribute('width', '60');
+half_visible_feImage.setAttribute('height', '60');
+half_visible_feImage.setAttribute('href', maskUrl);
+half_visible_feImage.setAttribute('result', 'mask-tile');
+half_visible_filter.appendChild(half_visible_feImage);
+
+const half_visible_feTile = document.createElementNS("http://www.w3.org/2000/svg", 'feTile');
+half_visible_feTile.setAttribute('in', 'mask-tile');
+half_visible_feTile.setAttribute('result', 'mask');
+half_visible_filter.appendChild(half_visible_feTile);
+
+const half_visible_feBlend = document.createElementNS("http://www.w3.org/2000/svg", 'feBlend');
+half_visible_feBlend.setAttribute('in', 'SourceGraphic');
+half_visible_feBlend.setAttribute('in2', 'mask');
+half_visible_feBlend.setAttribute('mode', 'multiply');
+half_visible_filter.appendChild(half_visible_feBlend);
 
 svg.style.display = 'none';
-document.body.append(svg);
+document.body.appendChild(svg);
