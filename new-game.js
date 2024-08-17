@@ -76,7 +76,11 @@ configContainer.append(title);
 configContainer.style.marginTop = '1.2em';
 
 // Append each filter to container
-configs.forEach(config => { 
+configs.forEach((config, i) => { 
+  if (i == 3) {
+    configContainer.append(document.createElement('br'));
+  }
+
   const div = document.createElement('div');
   div.classList.add('form-check', 'form-check-inline');
   
