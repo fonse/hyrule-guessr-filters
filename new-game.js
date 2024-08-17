@@ -1,11 +1,19 @@
-const easyFilters = [
+const filters = [
+  {
+    id: "filter-pixelate",
+    label: "Pixelate",
+  },
+  {
+    id: "filter-scramble",
+    label: "Scramble",
+  },
+  {
+    id: "filter-half-visible",
+    label: "Half Visible",
+  },
   {
     id: "filter-upside-down",
     label: "Upside Down",
-  },
-  {
-    id: "filter-blur",
-    label: "Blur",
   },
   {
     id: "filter-invert",
@@ -14,21 +22,6 @@ const easyFilters = [
   {
     id: "filter-greyscale",
     label: "Greyscale",
-  },
-]
-
-const hardFilters = [
-  {
-    id: "filter-scramble",
-    label: "Scramble",
-  },
-  {
-    id: "filter-pixelate",
-    label: "Pixelate",
-  },
-  {
-    id: "filter-half-visible",
-    label: "Half Visible",
   },
 ];
 
@@ -40,7 +33,6 @@ const handleFiltersChange = () => {
   const scramble = document.getElementById('filter-scramble').checked;
   const pixelate = document.getElementById('filter-pixelate').checked;
   const halfVisible = document.getElementById('filter-half-visible').checked;
-  const blur = document.getElementById('filter-blur').checked;
   const invert = document.getElementById('filter-invert').checked;
   const greyscale = document.getElementById('filter-greyscale').checked;
   const upsideDown = document.getElementById('filter-upside-down').checked;
@@ -56,9 +48,6 @@ const handleFiltersChange = () => {
   }
   if (halfVisible) {
     filters.push('url(#half-visible)');
-  }
-  if (blur) {
-    filters.push('blur(5px)');
   }
   if (invert) {
     filters.push('invert(100%)');
@@ -77,8 +66,8 @@ const handleFiltersChange = () => {
     .viewer-canvas img {
       filter: ${filters.join(' ')};
       transform: ${transform.join(' ')} !important;
-      width: 100% ${scramble ? '!important' : ''};
-      height: 100% ${scramble ? '!important' : ''};
+      width: 1280px ${scramble ? '!important' : ''};
+      height: 720px ${scramble ? '!important' : ''};
     }
   `);
 }
@@ -111,29 +100,23 @@ const onLoadNewGamePage = () => {
   // Create container for filter controls
   const ctaElement = document.querySelector('.start-game-btn-container');
   const filtersContainer = document.createElement('div');
-  ctaElement.before(filtersContainer);
   
-  // Append easy filters
-  const titleEasy = document.createElement('h4');
-  titleEasy.textContent = 'Easy Filters';
-  titleEasy.style.marginTop = '1.2em';
-  filtersContainer.append(titleEasy);
-
-  easyFilters.forEach((filter) => { 
+  const title = document.createElement('h4');
+  title.textContent = 'Extra Filters';
+  title.style.marginTop = '1.2em';
+  filtersContainer.append(title);
+  
+  filters.forEach((filter, i) => { 
+    if (i == 3) {
+      const br = document.createElement('br');
+      filtersContainer.append(br);
+    }
+    
     const filterDiv = createFilter(filter);
     filtersContainer.append(filterDiv);
   });
-
-  // Append hard filters
-  const titleHard = document.createElement('h4');
-  titleHard.textContent = 'Hard Filters';
-  titleHard.style.marginTop = '1.2em';
-  filtersContainer.append(titleHard);
-
-  hardFilters.forEach((filter) => { 
-    const filterDiv = createFilter(filter);
-    filtersContainer.append(filterDiv);
-  });
+  
+  ctaElement.before(filtersContainer);
 
 }
 
@@ -216,8 +199,8 @@ half_visible_filter.setAttribute('height', '100%');
 svg.appendChild(half_visible_filter);
 
 const half_visible_feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
-half_visible_feImage.setAttribute('width', '60');
-half_visible_feImage.setAttribute('height', '60');
+half_visible_feImage.setAttribute('width', '320');
+half_visible_feImage.setAttribute('height', '360');
 half_visible_feImage.setAttribute('href', maskUrl);
 half_visible_feImage.setAttribute('result', 'mask-tile');
 half_visible_filter.appendChild(half_visible_feImage);
