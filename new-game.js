@@ -56,7 +56,7 @@ const handleFiltersChange = () => {
     filters.push('grayscale(100%)');
   }
   if (upsideDown) {
-    transform.push('rotate(180deg)');
+    transform.push('scaleY(-1)');
   }
 
   if (styleElement.sheet.cssRules.length > 0) {
