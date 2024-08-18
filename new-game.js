@@ -66,8 +66,8 @@ const handleFiltersChange = () => {
     .viewer-canvas img {
       filter: ${filters.join(' ')};
       transform: ${transform.join(' ')} !important;
-      width: 1280px ${scramble ? '!important' : ''};
-      height: 720px ${scramble ? '!important' : ''};
+      width: 1280px ${scramble || halfVisible ? '!important' : ''};
+      height: 720px ${scramble || halfVisible ? '!important' : ''};
     }
   `);
 }
@@ -151,8 +151,19 @@ const shuffleArray = (array) => {
 }
 
 // Append svg for filters
-const maskUrl = chrome.runtime.getURL('mask.png');
 const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+
+const width = 1280;
+const height = 720;
+const xsteps = 5;
+const ysteps = 4;
+
+const stepX = width / xsteps;
+const stepY = height / ysteps;
+
+const greyPixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjWLBgwX8ABqQC4OZS39wAAAAASUVORK5CYII=';
+const blackPixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII=';
+const pixelateDisplacementMap = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAIAAAACDbGyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAWSURBVAgdY1ywgOEDAwKxgJhIgFQ+AP/vCNK2s+8LAAAAAElFTkSuQmCC';
 
 // Pixelate
 const pixelate_filter = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
@@ -166,7 +177,7 @@ svg.appendChild(pixelate_filter);
 const pixelate_feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
 pixelate_feImage.setAttribute('width', '15');
 pixelate_feImage.setAttribute('height', '15');
-pixelate_feImage.setAttribute('href', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAIAAAACDbGyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAWSURBVAgdY1ywgOEDAwKxgJhIgFQ+AP/vCNK2s+8LAAAAAElFTkSuQmCC');
+pixelate_feImage.setAttribute('href', pixelateDisplacementMap);
 pixelate_feImage.setAttribute('result', 'displacement-map');
 pixelate_filter.appendChild(pixelate_feImage);
 
@@ -198,33 +209,39 @@ half_visible_filter.setAttribute('width', '100%');
 half_visible_filter.setAttribute('height', '100%');
 svg.appendChild(half_visible_filter);
 
-const half_visible_feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
-half_visible_feImage.setAttribute('width', '320');
-half_visible_feImage.setAttribute('height', '360');
-half_visible_feImage.setAttribute('href', maskUrl);
-half_visible_feImage.setAttribute('result', 'mask-tile');
-half_visible_filter.appendChild(half_visible_feImage);
+const half_visible_feMerge = document.createElementNS("http://www.w3.org/2000/svg", 'feMerge');
+const half_visible_feMergeNode_source = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+half_visible_feMergeNode_source.setAttribute('in', 'SourceGraphic');
+half_visible_feMerge.appendChild(half_visible_feMergeNode_source);
 
-const half_visible_feTile = document.createElementNS("http://www.w3.org/2000/svg", 'feTile');
-half_visible_feTile.setAttribute('in', 'mask-tile');
-half_visible_feTile.setAttribute('result', 'mask');
-half_visible_filter.appendChild(half_visible_feTile);
+for (let i = 0; i < xsteps; i++){
+  for (let j = 0; j < ysteps; j++){
+    const x = i * stepX;
+    const y = j * stepY;
 
-const half_visible_feBlend = document.createElementNS("http://www.w3.org/2000/svg", 'feBlend');
-half_visible_feBlend.setAttribute('in', 'SourceGraphic');
-half_visible_feBlend.setAttribute('in2', 'mask-offset');
-half_visible_feBlend.setAttribute('mode', 'multiply');
-half_visible_filter.appendChild(half_visible_feBlend);
+    if (i % 2 == j % 2) {
+      continue;
+    }
+
+    const half_visible_feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
+    half_visible_feImage.setAttribute('x', x);
+    half_visible_feImage.setAttribute('y', y);
+    half_visible_feImage.setAttribute('width', stepX);
+    half_visible_feImage.setAttribute('height', stepY);
+    half_visible_feImage.setAttribute('preserveAspectRatio', 'none');
+    half_visible_feImage.setAttribute('href', greyPixel);
+    half_visible_feImage.setAttribute('result', `cover-${i}-${j}`);
+    half_visible_filter.appendChild(half_visible_feImage);
+
+    const half_visible_feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+    half_visible_feMergeNode.setAttribute('in', `cover-${i}-${j}`);
+    half_visible_feMerge.appendChild(half_visible_feMergeNode);
+  }
+}
+
+half_visible_filter.appendChild(half_visible_feMerge);
 
 // Scramble
-const width = 1280;
-const height = 720;
-const xsteps = 8;
-const ysteps = 4;
-
-const stepX = width / xsteps;
-const stepY = height / ysteps;
-
 const targets = [];
 for (let i = 0; i < xsteps; i++){
   for (let j = 0; j < ysteps; j++){
@@ -256,7 +273,7 @@ for (let i = 0; i < xsteps; i++){
     scramble_feImage.setAttribute('width', stepX);
     scramble_feImage.setAttribute('height', stepY);
     scramble_feImage.setAttribute('preserveAspectRatio', 'none');
-    scramble_feImage.setAttribute('href', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII=');
+    scramble_feImage.setAttribute('href', blackPixel);
     scramble_feImage.setAttribute('result', `mask-${i}-${j}`);
     scramble_filter.appendChild(scramble_feImage);
 

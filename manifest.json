@@ -10,12 +10,5 @@
         "https://hyruleguessr.com/*"
       ]
     }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["mask.png"],
-      "matches": ["https://hyruleguessr.com/*"]
-    }
   ]
-
 }
