@@ -299,5 +299,4 @@ for (let i = 0; i < xsteps; i++){
 
 scramble_filter.appendChild(scramble_feMerge);
 
-svg.style.display = 'none';
 document.body.appendChild(svg);
