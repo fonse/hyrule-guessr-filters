@@ -1,3 +1,4 @@
+const scramblePatternCount = 20;
 const filters = [
   {
     id: "filter-pixelate",
@@ -41,7 +42,8 @@ const handleFiltersChange = () => {
   const transform = [];
 
   if (scramble) {
-    filters.push('url(#scramble)');
+    const patternIndex = Math.floor(Math.random() * scramblePatternCount);
+    filters.push(`url(#scramble-${patternIndex})`);
   }
   if (pixelate) {
     filters.push('url(#pixelate)');
@@ -125,6 +127,7 @@ const isNewGamePage = () => {
   return !!document.querySelector('.start-game-btn-container');
 }
 
+let currentImage = null;
 let inNewGamePage = isNewGamePage();
 if (inNewGamePage) {
   onLoadNewGamePage();
@@ -136,6 +139,20 @@ observer = new MutationObserver(() => {
   
   if (inNewGamePage != previousInNewGamePage && inNewGamePage) {
     onLoadNewGamePage();
+  }
+
+  // Detect when a new image is loaded and set a new scramble pattern
+  const previousImage = currentImage;
+  currentImage = document.querySelector('.viewer-canvas img');
+  if (currentImage && currentImage.src !== previousImage?.src && styleElement?.sheet.cssRules.length > 0) {
+    const currentRule = styleElement.sheet.cssRules[0].cssText;
+    const patternIndex = Math.floor(Math.random() * scramblePatternCount);
+    const newRule = currentRule.replace(/scramble-\d+/, `scramble-${patternIndex}`);
+    
+    if (currentRule != newRule) {
+      styleElement.sheet.deleteRule(0);
+      styleElement.sheet.insertRule(newRule);
+    }
   }
 });
 
@@ -242,61 +259,63 @@ for (let i = 0; i < xsteps; i++){
 half_visible_filter.appendChild(half_visible_feMerge);
 
 // Scramble
-const targets = [];
-for (let i = 0; i < xsteps; i++){
-  for (let j = 0; j < ysteps; j++){
-    targets.push([i, j]);
+for (let k = 0; k < scramblePatternCount; k++) {
+  const targets = [];
+  for (let i = 0; i < xsteps; i++){
+    for (let j = 0; j < ysteps; j++){
+      targets.push([i, j]);
+    }
   }
-}
-shuffleArray(targets);
+  shuffleArray(targets);
 
-const scramble_filter = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
-scramble_filter.setAttribute('id', 'scramble');
-scramble_filter.setAttribute('x', '0%');
-scramble_filter.setAttribute('y', '0%');
-scramble_filter.setAttribute('width', '100%');
-scramble_filter.setAttribute('height', '100%');
-svg.appendChild(scramble_filter);
+  const scramble_filter = document.createElementNS("http://www.w3.org/2000/svg", 'filter');
+  scramble_filter.setAttribute('id', `scramble-${k}`);
+  scramble_filter.setAttribute('x', '0%');
+  scramble_filter.setAttribute('y', '0%');
+  scramble_filter.setAttribute('width', '100%');
+  scramble_filter.setAttribute('height', '100%');
+  svg.appendChild(scramble_filter);
 
-const scramble_feMerge = document.createElementNS("http://www.w3.org/2000/svg", 'feMerge');
+  const scramble_feMerge = document.createElementNS("http://www.w3.org/2000/svg", 'feMerge');
 
-for (let i = 0; i < xsteps; i++){
-  for (let j = 0; j < ysteps; j++){
-    const x = i * stepX;
-    const y = j * stepY;
+  for (let i = 0; i < xsteps; i++){
+    for (let j = 0; j < ysteps; j++){
+      const x = i * stepX;
+      const y = j * stepY;
 
-    const [targetI, targetJ] = targets[i * ysteps + j];
+      const [targetI, targetJ] = targets[i * ysteps + j];
 
-    const scramble_feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
-    scramble_feImage.setAttribute('x', x);
-    scramble_feImage.setAttribute('y', y);
-    scramble_feImage.setAttribute('width', stepX);
-    scramble_feImage.setAttribute('height', stepY);
-    scramble_feImage.setAttribute('preserveAspectRatio', 'none');
-    scramble_feImage.setAttribute('href', blackPixel);
-    scramble_feImage.setAttribute('result', `mask-${i}-${j}`);
-    scramble_filter.appendChild(scramble_feImage);
+      const scramble_feImage = document.createElementNS("http://www.w3.org/2000/svg", 'feImage');
+      scramble_feImage.setAttribute('x', x);
+      scramble_feImage.setAttribute('y', y);
+      scramble_feImage.setAttribute('width', stepX);
+      scramble_feImage.setAttribute('height', stepY);
+      scramble_feImage.setAttribute('preserveAspectRatio', 'none');
+      scramble_feImage.setAttribute('href', blackPixel);
+      scramble_feImage.setAttribute('result', `mask-${i}-${j}`);
+      scramble_filter.appendChild(scramble_feImage);
 
-    const scramble_feComposite = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
-    scramble_feComposite.setAttribute('in', 'SourceGraphic');
-    scramble_feComposite.setAttribute('in2', `mask-${i}-${j}`);
-    scramble_feComposite.setAttribute('operator', 'in');
-    scramble_feComposite.setAttribute('result', `tile-${i}-${j}`);
-    scramble_filter.appendChild(scramble_feComposite);
-    
-    const scramble_feOffset = document.createElementNS("http://www.w3.org/2000/svg", 'feOffset');
-    scramble_feOffset.setAttribute('in', `tile-${i}-${j}`);
-    scramble_feOffset.setAttribute('dx', (targetI - i) * stepX);
-    scramble_feOffset.setAttribute('dy', (targetJ - j) * stepY);
-    scramble_feOffset.setAttribute('result', `offset-${i}-${j}`);
-    scramble_filter.appendChild(scramble_feOffset);
+      const scramble_feComposite = document.createElementNS("http://www.w3.org/2000/svg", 'feComposite');
+      scramble_feComposite.setAttribute('in', 'SourceGraphic');
+      scramble_feComposite.setAttribute('in2', `mask-${i}-${j}`);
+      scramble_feComposite.setAttribute('operator', 'in');
+      scramble_feComposite.setAttribute('result', `tile-${i}-${j}`);
+      scramble_filter.appendChild(scramble_feComposite);
+      
+      const scramble_feOffset = document.createElementNS("http://www.w3.org/2000/svg", 'feOffset');
+      scramble_feOffset.setAttribute('in', `tile-${i}-${j}`);
+      scramble_feOffset.setAttribute('dx', (targetI - i) * stepX);
+      scramble_feOffset.setAttribute('dy', (targetJ - j) * stepY);
+      scramble_feOffset.setAttribute('result', `offset-${i}-${j}`);
+      scramble_filter.appendChild(scramble_feOffset);
 
-    const scramble_feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
-    scramble_feMergeNode.setAttribute('in', `offset-${i}-${j}`);
-    scramble_feMerge.appendChild(scramble_feMergeNode);
+      const scramble_feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", 'feMergeNode');
+      scramble_feMergeNode.setAttribute('in', `offset-${i}-${j}`);
+      scramble_feMerge.appendChild(scramble_feMergeNode);
+    }
   }
-}
 
-scramble_filter.appendChild(scramble_feMerge);
+  scramble_filter.appendChild(scramble_feMerge);
+}
 
 document.body.appendChild(svg);
